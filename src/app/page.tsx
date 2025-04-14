@@ -24,7 +24,7 @@ const sounds = {
 };
 
 // Function to embed a YouTube video
-const YouTubeEmbed = ({ videoId }: { videoId: string }) => {
+const YouTubeEmbed = ({ videoId, youtubeRef }: { videoId: string, youtubeRef: React.RefObject<HTMLIFrameElement> }) => {
   const videoSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}`;
 
   return (
@@ -111,6 +111,10 @@ export default function Home() {
       sound.play();
     }
 
+    if (selectedSound === 'youtube' && youtubeRef.current) {
+      youtubeRef.current.contentWindow?.postMessage('{"event":"command","func":"' + 'playVideo' + '","args":""}', '*');
+    }
+
     timerIdRef.current = window.setInterval(() => {
       setTimeRemaining((prevTime) => {
         if (prevTime <= 1) {
@@ -125,18 +129,6 @@ export default function Home() {
       });
     }, 1000);
   };
-
-  useEffect(() => {
-    if (chimeInterval && isRunning) {
-      const chimeTimerId = setInterval(() => {
-        if (gongSound) {
-          gongSound.play();
-        }
-      }, chimeInterval * 60 * 1000); // Convert minutes to milliseconds
-
-      return () => clearInterval(chimeTimerId);
-    }
-  }, [chimeInterval, isRunning, gongSound]);
 
   const stopTimer = () => {
     setIsRunning(false);
@@ -284,7 +276,7 @@ export default function Home() {
         </Card>
         {selectedSound === 'youtube' && (
           <div className="mt-4">
-            <YouTubeEmbed videoId={youtubeVideoId} />
+            <YouTubeEmbed videoId={youtubeVideoId} youtubeRef={youtubeRef} />
           </div>
         )}
         <div className="mt-8 text-center">
