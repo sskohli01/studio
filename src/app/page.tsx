@@ -30,6 +30,7 @@ const YouTubeEmbed = ({ videoId }: { videoId: string }) => {
   return (
     <div className="aspect-w-16 aspect-h-9">
       <iframe
+        ref={youtubeRef}
         src={videoSrc}
         title="YouTube meditation video"
         allow="autoplay; encrypted-media"
@@ -93,6 +94,14 @@ export default function Home() {
     }
   }, [sound, isRunning, volume, isMuted]);
 
+    useEffect(() => {
+        if (isRunning && selectedSound === 'youtube' && youtubeRef.current) {
+            youtubeRef.current.contentWindow?.postMessage('{"event":"command","func":"' + 'playVideo' + '","args":""}', '*');
+        } else if (!isRunning && selectedSound === 'youtube' && youtubeRef.current) {
+            youtubeRef.current.contentWindow?.postMessage('{"event":"command","func":"' + 'pauseVideo' + '","args":""}', '*');
+        }
+    }, [isRunning, selectedSound]);
+
   const startTimer = () => {
     if (gongSound) {
       gongSound.play();
@@ -100,11 +109,6 @@ export default function Home() {
     setIsRunning(true);
     if (selectedSound !== 'youtube' && sound && !isMuted) {
       sound.play();
-    }
-
-    if (selectedSound === 'youtube' && youtubeRef.current) {
-      // Adjust the YouTube video to play through JavaScript control
-      youtubeRef.current.contentWindow?.postMessage('{"event":"command","func":"' + 'playVideo' + '","args":""}', '*');
     }
 
     timerIdRef.current = window.setInterval(() => {
