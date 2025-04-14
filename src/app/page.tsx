@@ -69,7 +69,7 @@ export default function Home() {
   const [streak, setStreak] = useState(0); // Track meditation streak
   const [lastMeditated, setLastMeditated] = useState<Date | null>(null);
 
-  const youtubeVideoId = 'AjIXx4W7Lvk'; // Replace with your YouTube video ID
+  const youtubeVideoId = 'R8XL0yf3CUw'; // Replace with your YouTube video ID
 
   useEffect(() => {
     setGongSound(new Howl({
@@ -145,6 +145,7 @@ export default function Home() {
           if (gongSound) {
             gongSound.play();
           }
+          handleMeditationCompletion();
           return 0;
         }
         return prevTime - 1;
@@ -241,11 +242,11 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    if (timeRemaining === 0 && isRunning === false) {
-      handleMeditationCompletion();
-    }
-  }, [timeRemaining, isRunning]);
+  // Dummy data for meditation activity
+  const dummyMeditationData = Array.from({ length: 30 }, (_, i) => ({
+    date: new Date(new Date().setDate(new Date().getDate() - i)).toISOString().slice(0, 10),
+    meditated: Math.random() > 0.3, // Simulate some days missed
+  }));
 
   return (
     <div style={visualAidStyle} onClick={incrementJapaCount} className="transition-all duration-1000">
@@ -356,6 +357,34 @@ export default function Home() {
           <p className="text-xl text-primary mt-4">Japa Count: {japaCount}</p>
           <p className="text-xl text-primary mt-2">Meditation Streak: {streak} days</p>
         </div>
+
+         {/* Statistics Section */}
+         <div className="mt-8 w-full max-w-md">
+            <h2 className="text-2xl font-semibold text-primary mb-4">Statistics</h2>
+            <Card>
+              <CardContent className="flex flex-col gap-4">
+                {/* Streak Display */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Current Streak:</span>
+                  <span className="text-lg font-bold">{streak} days</span>
+                </div>
+
+                {/* Heat Map Visualization */}
+                <div className="w-full overflow-x-auto">
+                  <div className="flex gap-1">
+                    {dummyMeditationData.map((item) => (
+                      <div
+                        key={item.date}
+                        className={`w-6 h-6 rounded-sm ${item.meditated ? 'bg-accent' : 'bg-muted'}`}
+                        title={`${item.date}: ${item.meditated ? 'Meditated' : 'Missed'}`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Last 30 Days</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
       </div>
     </div>
   );
