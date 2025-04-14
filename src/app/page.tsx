@@ -31,7 +31,24 @@ const colorPalette = [
 const sounds = {
   nature: '/sounds/nature.mp3',
   binaural: '/sounds/binaural.mp3',
+  youtube: 'youtube',
   none: null,
+};
+
+// Function to embed a YouTube video
+const YouTubeEmbed = ({ videoId }: { videoId: string }) => {
+  const videoSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}`;
+
+  return (
+    <div className="aspect-w-16 aspect-h-9">
+      <iframe
+        src={videoSrc}
+        title="YouTube meditation video"
+        allow="autoplay; encrypted-media"
+        allowFullScreen
+      />
+    </div>
+  );
 };
 
 export default function Home() {
@@ -47,46 +64,70 @@ export default function Home() {
   const [currentBgColorIndex, setCurrentBgColorIndex] = useState(0);
   const [gongSound, setGongSound] = useState<Howl | null>(null);
   const timerIdRef = useRef<number | null>(null);
-    const isMobile = useIsMobile();
-      const { toast } = useToast()
+  const isMobile = useIsMobile();
+  const { toast } = useToast();
+  const [streak, setStreak] = useState(0); // Track meditation streak
+  const [lastMeditated, setLastMeditated] = useState<Date | null>(null);
+
+  const youtubeVideoId = 'AjIXx4W7Lvk'; // Replace with your YouTube video ID
 
   useEffect(() => {
-      setGongSound(new Howl({
-          src: ['/sounds/gong.mp3'],
-          volume: volume,
-      }));
+    setGongSound(new Howl({
+      src: ['/sounds/gong.mp3'],
+      volume: volume,
+    }));
   }, [volume]);
 
   useEffect(() => {
-      if (sounds[selectedSound]) {
-          setSound(new Howl({
-              src: [sounds[selectedSound]!],
-              loop: true,
-              volume: volume,
-          }));
-      } else {
-          setSound(null);
+    if (selectedSound === 'youtube') {
+      // Stop other sounds if YouTube is selected
+      if (sound) {
+        sound.pause();
       }
+      setSound(null);
+    } else if (sounds[selectedSound]) {
+      setSound(new Howl({
+        src: [sounds[selectedSound]!],
+        loop: true,
+        volume: volume,
+      }));
+    } else {
+      setSound(null);
+    }
   }, [selectedSound, volume]);
 
   useEffect(() => {
-      if (sound) {
-          sound.volume(volume);
-          if (isRunning && !isMuted) {
-              sound.play();
-          }
+    if (sound) {
+      sound.volume(volume);
+      if (isRunning && !isMuted) {
+        sound.play();
       }
-      if (isMuted && sound) {
-          sound.pause();
-      }
+    }
+    if (isMuted && sound) {
+      sound.pause();
+    }
   }, [sound, isRunning, volume, isMuted]);
 
   useEffect(() => {
-      const colorChangeInterval = setInterval(() => {
-          setCurrentBgColorIndex((prevIndex) => (prevIndex + 1) % colorPalette.length);
-      }, 10000); // Change color every 10 seconds
+    const colorChangeInterval = setInterval(() => {
+      setCurrentBgColorIndex((prevIndex) => (prevIndex + 1) % colorPalette.length);
+    }, 10000); // Change color every 10 seconds
 
-      return () => clearInterval(colorChangeInterval);
+    return () => clearInterval(colorChangeInterval);
+  }, []);
+
+  // Load streak and lastMeditated from localStorage
+  useEffect(() => {
+    const storedStreak = localStorage.getItem('meditationStreak');
+    const storedLastMeditated = localStorage.getItem('lastMeditated');
+
+    if (storedStreak) {
+      setStreak(parseInt(storedStreak, 10));
+    }
+
+    if (storedLastMeditated) {
+      setLastMeditated(new Date(storedLastMeditated));
+    }
   }, []);
 
   const startTimer = () => {
@@ -94,9 +135,9 @@ export default function Home() {
       gongSound.play();
     }
     setIsRunning(true);
-        if (sound && !isMuted) {
-            sound.play();
-        }
+    if (sound && !isMuted) {
+      sound.play();
+    }
     timerIdRef.current = window.setInterval(() => {
       setTimeRemaining((prevTime) => {
         if (prevTime <= 1) {
@@ -125,9 +166,9 @@ export default function Home() {
 
   const stopTimer = () => {
     setIsRunning(false);
-        if (sound) {
-            sound.pause();
-        }
+    if (sound) {
+      sound.pause();
+    }
     if (timerIdRef.current) {
       clearInterval(timerIdRef.current);
       timerIdRef.current = null;
@@ -151,12 +192,12 @@ export default function Home() {
   };
 
   const toggleMute = () => {
-        setIsMuted(!isMuted);
-        toast({
-            title: isMuted ? "Sound on" : "Sound muted",
-            description: isMuted ? "Sounds are now unmuted." : "Sounds are now muted.",
-        })
-    };
+    setIsMuted(!isMuted);
+    toast({
+      title: isMuted ? "Sound on" : "Sound muted",
+      description: isMuted ? "Sounds are now unmuted." : "Sounds are now muted.",
+    })
+  };
 
   const visualAidStyle = {
     backgroundColor: colorPalette[currentBgColorIndex],
@@ -167,6 +208,44 @@ export default function Home() {
     alignItems: 'center',
     justifyContent: 'center',
   };
+
+  // Function to handle meditation completion
+  const handleMeditationCompletion = () => {
+    const today = new Date();
+    const isSameDay = lastMeditated &&
+      today.getFullYear() === lastMeditated.getFullYear() &&
+      today.getMonth() === lastMeditated.getMonth() &&
+      today.getDate() === lastMeditated.getDate();
+
+    if (!isSameDay) {
+      const isConsecutiveDay = lastMeditated &&
+        today.getFullYear() === lastMeditated.getFullYear() &&
+        today.getMonth() === lastMeditated.getMonth() &&
+        today.getDate() === lastMeditated.getDate() + 1;
+
+      const newStreak = isConsecutiveDay ? streak + 1 : 1;
+      setStreak(newStreak);
+      localStorage.setItem('meditationStreak', newStreak.toString());
+      setLastMeditated(today);
+      localStorage.setItem('lastMeditated', today.toISOString());
+
+      toast({
+        title: "Meditation Complete!",
+        description: `You've meditated ${isConsecutiveDay ? 'another' : 'for the first'} day in a row! Your streak is now ${newStreak}.`,
+      });
+    } else {
+      toast({
+        title: "Meditation Already Done Today",
+        description: "You've already meditated today. Come back tomorrow to continue your streak!",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (timeRemaining === 0 && isRunning === false) {
+      handleMeditationCompletion();
+    }
+  }, [timeRemaining, isRunning]);
 
   return (
     <div style={visualAidStyle} onClick={incrementJapaCount} className="transition-all duration-1000">
@@ -202,28 +281,29 @@ export default function Home() {
               >
                 <option value="nature">Nature</option>
                 <option value="binaural">Binaural Beats</option>
+                <option value="youtube">YouTube Loop</option>
                 <option value="none">None</option>
               </select>
             </div>
             <div className="flex items-center justify-between">
-                    <label htmlFor="volume" className="text-sm font-medium">Volume:</label>
-                    <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="icon" onClick={toggleMute}>
-                            {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                            <span className="sr-only">Toggle Mute</span>
-                        </Button>
-                        <Slider
-                            id="volume"
-                            min={0}
-                            max={1}
-                            step={0.1}
-                            defaultValue={[volume]}
-                            onValueChange={(newValue) => setVolume(newValue[0])}
-                            aria-label="Volume"
-                            className="w-32"
-                        />
-                    </div>
-                </div>
+              <label htmlFor="volume" className="text-sm font-medium">Volume:</label>
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="icon" onClick={toggleMute}>
+                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                  <span className="sr-only">Toggle Mute</span>
+                </Button>
+                <Slider
+                  id="volume"
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  defaultValue={[volume]}
+                  onValueChange={(newValue) => setVolume(newValue[0])}
+                  aria-label="Volume"
+                  className="w-32"
+                />
+              </div>
+            </div>
 
             <div className="flex items-center justify-between">
               <label htmlFor="chimeInterval" className="text-sm font-medium">
@@ -264,12 +344,17 @@ export default function Home() {
             </div>
           </CardContent>
         </Card>
-
+        {selectedSound === 'youtube' && (
+          <div className="mt-4">
+            <YouTubeEmbed videoId={youtubeVideoId} />
+          </div>
+        )}
         <div className="mt-8 text-center">
           <h2 className="text-2xl font-semibold text-primary">Time Remaining:</h2>
           <p className="text-4xl font-bold text-accent">{formatTime(timeRemaining)}</p>
           <p className="text-lg text-muted-foreground mt-2">Tap anywhere to increment Japa Count</p>
           <p className="text-xl text-primary mt-4">Japa Count: {japaCount}</p>
+          <p className="text-xl text-primary mt-2">Meditation Streak: {streak} days</p>
         </div>
       </div>
     </div>
