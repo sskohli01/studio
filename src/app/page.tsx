@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -7,7 +6,7 @@ import { Slider } from '@/components/ui/slider';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils";
-import { Play, Pause, Reset, Bell, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Repeat, Bell, Volume2, VolumeX } from 'lucide-react';
 import { Howl } from 'howler';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -259,7 +258,7 @@ export default function Home() {
                 </Button>
               )}
               <Button onClick={resetTimer} variant="outline">
-                <Reset className="mr-2 h-4 w-4" />
+                <Repeat className="mr-2 h-4 w-4" />
                 Reset
               </Button>
             </div>
