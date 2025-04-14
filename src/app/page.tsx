@@ -97,7 +97,7 @@ export default function Home() {
       gongSound.play();
     }
     setIsRunning(true);
-    if (sound && !isMuted) {
+    if (selectedSound !== 'youtube' && sound && !isMuted) {
       sound.play();
     }
     timerIdRef.current = window.setInterval(() => {
@@ -138,12 +138,6 @@ export default function Home() {
     }
   };
 
-  const resetTimer = () => {
-    stopTimer();
-    setTimeRemaining(duration);
-    setJapaCount(0);
-  };
-
   const handleDurationChange = (newValue: number[]) => {
     const newDuration = newValue[0];
     setDuration(newDuration);
@@ -179,16 +173,10 @@ export default function Home() {
     });
   };
 
-  // Dummy data for meditation activity
-  const dummyMeditationData = Array.from({ length: 30 }, (_, i) => ({
-    date: new Date(new Date().setDate(new Date().getDate() - i)).toISOString().slice(0, 10),
-    meditated: Math.random() > 0.3, // Simulate some days missed
-  }));
-
   return (
     <div style={visualAidStyle} onClick={incrementJapaCount} className="transition-all duration-1000">
       <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center">
-        <h1 className="text-3xl md:text-5xl font-bold text-primary mb-8">Radha Chanting</h1>
+        <h1 className="text-3xl md:text-5xl font-bold mb-8" style={{ color: 'black' }}>Radha Chanting</h1>
 
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col gap-4">
@@ -275,10 +263,6 @@ export default function Home() {
                   Start
                 </Button>
               )}
-              <Button onClick={resetTimer} variant="outline">
-                <Repeat className="mr-2 h-4 w-4" />
-                Reset
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -288,10 +272,10 @@ export default function Home() {
           </div>
         )}
         <div className="mt-8 text-center">
-          <h2 className="text-2xl font-semibold text-primary">Time Remaining:</h2>
+          <h2 className="text-2xl font-semibold" style={{ color: 'black' }}>Time Remaining:</h2>
           <p className="text-4xl font-bold text-accent">{formatTime(timeRemaining)}</p>
           <p className="text-lg text-muted-foreground mt-2">Tap anywhere to increment Japa Count</p>
-          <p className="text-xl text-primary mt-4">Japa Count: {japaCount}</p>
+          <p className="text-xl mt-4" style={{ color: 'black' }}>Japa Count: {japaCount}</p>
         </div>
       </div>
     </div>
