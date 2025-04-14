@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { Play, Pause, Repeat, Bell, Volume2, VolumeX } from 'lucide-react';
 import { Howl } from 'howler';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Calendar } from "@/components/ui/calendar"
+import { addDays, format } from "date-fns";
 
 const formatTime = (seconds: number): string => {
   const minutes = Math.floor(seconds / 60);
@@ -24,13 +26,12 @@ const sounds = {
 };
 
 // Function to embed a YouTube video
-const YouTubeEmbed = ({ videoId, youtubeRef }: { videoId: string, youtubeRef: React.RefObject<HTMLIFrameElement> }) => {
+const YouTubeEmbed = ({ videoId }: { videoId: string }) => {
   const videoSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}`;
 
   return (
     <div className="aspect-w-16 aspect-h-9">
       <iframe
-        ref={youtubeRef}
         src={videoSrc}
         title="YouTube meditation video"
         allow="autoplay; encrypted-media"
@@ -55,7 +56,14 @@ export default function Home() {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const youtubeVideoId = 'R8XL0yf3CUw'; // Replace with your YouTube video ID
-  const youtubeRef = useRef<HTMLIFrameElement>(null);
+  const [streakDates, setStreakDates] = useState<Date[]>([
+    new Date("2024-07-01"),
+    new Date("2024-07-02"),
+    new Date("2024-07-03"),
+  ]);
+
+  const [selected, setSelected] = React.useState<Date | undefined>(new Date());
+
 
   useEffect(() => {
     setGongSound(new Howl({
@@ -94,14 +102,6 @@ export default function Home() {
     }
   }, [sound, isRunning, volume, isMuted]);
 
-    useEffect(() => {
-        if (isRunning && selectedSound === 'youtube' && youtubeRef.current) {
-            youtubeRef.current.contentWindow?.postMessage('{"event":"command","func":"' + 'playVideo' + '","args":""}', '*');
-        } else if (!isRunning && selectedSound === 'youtube' && youtubeRef.current) {
-            youtubeRef.current.contentWindow?.postMessage('{"event":"command","func":"' + 'pauseVideo' + '","args":""}', '*');
-        }
-    }, [isRunning, selectedSound]);
-
   const startTimer = () => {
     if (gongSound) {
       gongSound.play();
@@ -111,8 +111,10 @@ export default function Home() {
       sound.play();
     }
 
-    if (selectedSound === 'youtube' && youtubeRef.current) {
-      youtubeRef.current.contentWindow?.postMessage('{"event":"command","func":"' + 'playVideo' + '","args":""}', '*');
+    const youtubeVideo = document.querySelector('iframe');
+
+    if (selectedSound === 'youtube' && youtubeVideo) {
+      youtubeVideo.contentWindow?.postMessage('{"event":"command","func":"' + 'playVideo' + '","args":""}', '*');
     }
 
     timerIdRef.current = window.setInterval(() => {
@@ -139,11 +141,10 @@ export default function Home() {
       clearInterval(timerIdRef.current);
       timerIdRef.current = null;
     }
-
-      if (selectedSound === 'youtube' && youtubeRef.current) {
-          // Adjust the YouTube video to stop through JavaScript control
-          youtubeRef.current.contentWindow?.postMessage('{"event":"command","func":"' + 'pauseVideo' + '","args":""}', '*');
-      }
+        const youtubeVideo = document.querySelector('iframe');
+    if (selectedSound === 'youtube' && youtubeVideo) {
+      youtubeVideo.contentWindow?.postMessage('{"event":"command","func":"' + 'pauseVideo' + '","args":""}', '*');
+    }
   };
 
   const handleDurationChange = (newValue: number[]) => {
@@ -179,6 +180,17 @@ export default function Home() {
       title: "Meditation Complete!",
       description: `Radha chanting completed!`,
     });
+    setStreakDates(prev => {
+      const today = new Date();
+      const lastDate = prev[prev.length - 1];
+      if (lastDate && format(lastDate, 'yyyy-MM-dd') === format(addDays(today, -1), 'yyyy-MM-dd')) {
+        //add to current streak
+        return [...prev, today];
+      } else {
+        //start a new streak
+        return [...prev, today];
+      }
+    })
   };
 
   return (
@@ -276,7 +288,7 @@ export default function Home() {
         </Card>
         {selectedSound === 'youtube' && (
           <div className="mt-4">
-            <YouTubeEmbed videoId={youtubeVideoId} youtubeRef={youtubeRef} />
+            <YouTubeEmbed videoId={youtubeVideoId} />
           </div>
         )}
         <div className="mt-8 text-center">
@@ -284,6 +296,18 @@ export default function Home() {
           <p className="text-4xl font-bold text-accent">{formatTime(timeRemaining)}</p>
           <p className="text-lg text-muted-foreground mt-2">Tap anywhere to increment Japa Count</p>
           <p className="text-xl mt-4" style={{ color: 'black' }}>Japa Count: {japaCount}</p>
+        </div>
+                <div className="mt-8 text-center">
+          <h2 className="text-2xl font-semibold" style={{ color: 'black' }}>Meditation Streak:</h2>
+                      <Calendar
+            mode="single"
+            selected={selected}
+            onSelect={setSelected}
+            disabled={ [
+              { before: new Date() },
+              date => !streakDates.find(streakDate => format(streakDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'))
+            ]}
+            />
         </div>
       </div>
     </div>
