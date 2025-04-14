@@ -16,18 +16,6 @@ const formatTime = (seconds: number): string => {
   return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
 };
 
-const colorPalette = [
-  '#A7D1AB', // Soothing blue
-  '#BDE0FE',
-  '#F2E1C2',
-  '#D4A373',
-  '#94D2BD',
-  '#A9D6E5',
-  '#FAD2E1',
-  '#DDBEA9',
-  '#9A8C98',
-];
-
 const sounds = {
   nature: '/sounds/nature.mp3',
   binaural: '/sounds/binaural.mp3',
@@ -61,14 +49,10 @@ export default function Home() {
   const [sound, setSound] = useState<Howl | null>(null);
   const [volume, setVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
-  const [currentBgColorIndex, setCurrentBgColorIndex] = useState(0);
   const [gongSound, setGongSound] = useState<Howl | null>(null);
   const timerIdRef = useRef<number | null>(null);
   const isMobile = useIsMobile();
   const { toast } = useToast();
-  const [streak, setStreak] = useState(0); // Track meditation streak
-  const [lastMeditated, setLastMeditated] = useState<Date | null>(null);
-
   const youtubeVideoId = 'R8XL0yf3CUw'; // Replace with your YouTube video ID
 
   useEffect(() => {
@@ -107,28 +91,6 @@ export default function Home() {
       sound.pause();
     }
   }, [sound, isRunning, volume, isMuted]);
-
-  useEffect(() => {
-    const colorChangeInterval = setInterval(() => {
-      setCurrentBgColorIndex((prevIndex) => (prevIndex + 1) % colorPalette.length);
-    }, 10000); // Change color every 10 seconds
-
-    return () => clearInterval(colorChangeInterval);
-  }, []);
-
-  // Load streak and lastMeditated from localStorage
-  useEffect(() => {
-    const storedStreak = localStorage.getItem('meditationStreak');
-    const storedLastMeditated = localStorage.getItem('lastMeditated');
-
-    if (storedStreak) {
-      setStreak(parseInt(storedStreak, 10));
-    }
-
-    if (storedLastMeditated) {
-      setLastMeditated(new Date(storedLastMeditated));
-    }
-  }, []);
 
   const startTimer = () => {
     if (gongSound) {
@@ -201,8 +163,7 @@ export default function Home() {
   };
 
   const visualAidStyle = {
-    backgroundColor: colorPalette[currentBgColorIndex],
-    transition: 'background-color 10s ease-in-out',
+    backgroundColor: '#A7D1AB',
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
@@ -212,34 +173,10 @@ export default function Home() {
 
   // Function to handle meditation completion
   const handleMeditationCompletion = () => {
-    const today = new Date();
-    const isSameDay = lastMeditated &&
-      today.getFullYear() === lastMeditated.getFullYear() &&
-      today.getMonth() === lastMeditated.getMonth() &&
-      today.getDate() === lastMeditated.getDate();
-
-    if (!isSameDay) {
-      const isConsecutiveDay = lastMeditated &&
-        today.getFullYear() === lastMeditated.getFullYear() &&
-        today.getMonth() === lastMeditated.getMonth() &&
-        today.getDate() === lastMeditated.getDate() + 1;
-
-      const newStreak = isConsecutiveDay ? streak + 1 : 1;
-      setStreak(newStreak);
-      localStorage.setItem('meditationStreak', newStreak.toString());
-      setLastMeditated(today);
-      localStorage.setItem('lastMeditated', today.toISOString());
-
-      toast({
-        title: "Meditation Complete!",
-        description: `You've meditated ${isConsecutiveDay ? 'another' : 'for the first'} day in a row! Your streak is now ${newStreak}.`,
-      });
-    } else {
-      toast({
-        title: "Meditation Already Done Today",
-        description: "You've already meditated today. Come back tomorrow to continue your streak!",
-      });
-    }
+    toast({
+      title: "Meditation Complete!",
+      description: `Radha chanting completed!`,
+    });
   };
 
   // Dummy data for meditation activity
@@ -251,7 +188,7 @@ export default function Home() {
   return (
     <div style={visualAidStyle} onClick={incrementJapaCount} className="transition-all duration-1000">
       <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center">
-        <h1 className="text-3xl md:text-5xl font-bold text-primary mb-8">Zenith Timer</h1>
+        <h1 className="text-3xl md:text-5xl font-bold text-primary mb-8">Radha Chanting</h1>
 
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col gap-4">
@@ -355,36 +292,7 @@ export default function Home() {
           <p className="text-4xl font-bold text-accent">{formatTime(timeRemaining)}</p>
           <p className="text-lg text-muted-foreground mt-2">Tap anywhere to increment Japa Count</p>
           <p className="text-xl text-primary mt-4">Japa Count: {japaCount}</p>
-          <p className="text-xl text-primary mt-2">Meditation Streak: {streak} days</p>
         </div>
-
-         {/* Statistics Section */}
-         <div className="mt-8 w-full max-w-md">
-            <h2 className="text-2xl font-semibold text-primary mb-4">Statistics</h2>
-            <Card>
-              <CardContent className="flex flex-col gap-4">
-                {/* Streak Display */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Current Streak:</span>
-                  <span className="text-lg font-bold">{streak} days</span>
-                </div>
-
-                {/* Heat Map Visualization */}
-                <div className="w-full overflow-x-auto">
-                  <div className="flex gap-1">
-                    {dummyMeditationData.map((item) => (
-                      <div
-                        key={item.date}
-                        className={`w-6 h-6 rounded-sm ${item.meditated ? 'bg-accent' : 'bg-muted'}`}
-                        title={`${item.date}: ${item.meditated ? 'Meditated' : 'Missed'}`}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">Last 30 Days</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
       </div>
     </div>
   );
