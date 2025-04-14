@@ -54,6 +54,7 @@ export default function Home() {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const youtubeVideoId = 'R8XL0yf3CUw'; // Replace with your YouTube video ID
+  const youtubeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     setGongSound(new Howl({
@@ -100,6 +101,12 @@ export default function Home() {
     if (selectedSound !== 'youtube' && sound && !isMuted) {
       sound.play();
     }
+
+    if (selectedSound === 'youtube' && youtubeRef.current) {
+      // Adjust the YouTube video to play through JavaScript control
+      youtubeRef.current.contentWindow?.postMessage('{"event":"command","func":"' + 'playVideo' + '","args":""}', '*');
+    }
+
     timerIdRef.current = window.setInterval(() => {
       setTimeRemaining((prevTime) => {
         if (prevTime <= 1) {
@@ -136,6 +143,11 @@ export default function Home() {
       clearInterval(timerIdRef.current);
       timerIdRef.current = null;
     }
+
+      if (selectedSound === 'youtube' && youtubeRef.current) {
+          // Adjust the YouTube video to stop through JavaScript control
+          youtubeRef.current.contentWindow?.postMessage('{"event":"command","func":"' + 'pauseVideo' + '","args":""}', '*');
+      }
   };
 
   const handleDurationChange = (newValue: number[]) => {
